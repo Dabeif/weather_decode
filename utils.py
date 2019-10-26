@@ -2,6 +2,7 @@ import os
 import traceback
 import data
 import re
+import pandas as pd
 
 # 判断是否以“=”结尾
 pattern = re.compile('^(.*)=\n?$')
@@ -27,9 +28,12 @@ def effective_visibility(x: int):
 
 
 def IIiii(item: str):
-    ans = '未知'
-    if item in data.station_num:
-        ans = data.station_num[item]
+    df = pd.read_excel("station_number.xlsx", header=None)
+    ans = df[df[0] == int(item)]
+    if ans.empty:
+        ans = "未知"
+    else:
+        ans = ans.iloc[0][1] + ans.iloc[0][2]
     return ans
 
 
@@ -48,9 +52,13 @@ def ir_ix_h_vv(item: str):
     # h: 云底高度
     if item[2] != '/':
         ans += f'云底高度为{data.cloud_bottom_height[item[2]]}, '
+    else:
+        ans += '云底高度缺测'
     # vv: 有效能见度
     if item[3:] != '//':
         ans += effective_visibility(int(item[3:]))
+    else:
+        ans += '有效能见度缺测'
     return ans
 
 
@@ -59,12 +67,18 @@ def N_dd_ff(item: str):
     # N: 总云量
     if item[0] != '/':
         ans += f'总云量为{data.cloud_amount[item[0]]}, '
+    else:
+        ans += '总云量缺测'
     # dd: 风向
     if item[1:3] != '//':
         ans += f'{data.wind_direction[item[1:3]]}风, '
+    else:
+        ans += '风向缺测，'
     # ff: 风速
     if item[3:] != '//':
         ans += f'风速{int(item[3:])}米/秒'
+    else:
+        ans += '风速缺测'
     return ans
 
 
@@ -74,6 +88,8 @@ def _1Sn_TTT(item: str):
         ans += '零下'
     if item[2:] != '///':
         ans += f'{int(item[2:]) / 10}摄氏度'
+    else:
+        ans += '缺测'
     return ans
 
 
@@ -82,11 +98,21 @@ def _2Sn_TdTdTd(item: str):
 
 
 def _3PoPoPoPo(item: str):
-    return f'气压：{int(item[1:]) / 10}hPa'
+    ans = '气压：'
+    if item[1:] != '////':
+        ans += f'{int(item[1:]) / 10}hPa'
+    else:
+        ans += '缺测'
+    return ans
 
 
 def _4PPPP(item: str):
-    return f'海平面气压：{1000 + int(item[1:]) / 10}hPa'
+    ans = '海平面气压：'
+    if item[1:] != '////':
+        ans += f'{1000 + int(item[1:]) / 10}hPa'
+    else:
+        ans += '缺测'
+    return ans
 
 
 def _5aPPP(item: str):
@@ -111,7 +137,8 @@ def _6RRR1(item: str):
 
 
 def _7wwW1W2(item: str):
-    return f'现在天气现象是{data.weather_phenomenon[item[1:3]]}, 过去天气现象是{data.past_weather_phenomenon[item[3]]}'
+    return f'现在天气现象是{data.weather_phenomenon[item[1:3]]}, ' \
+        f'过去六小时出现的天气现象是{data.past_weather_phenomenon[item[3]]}和{data.past_weather_phenomenon[item[4]]}'
 
 
 def _8Nh_CCC(item: str):
@@ -122,11 +149,17 @@ def _8Nh_CCC(item: str):
         else:
             ans += f'中云量为{data.cloud_amount[item[1]]}, '
     if item[2] != '/':
-        ans += f'低云状为：{data.low_cloud[item[2]]}, '
+        ans += f'低云状：{data.low_cloud[item[2]]}, '
+    else:
+        ans += f'低云状：缺测，'
     if item[3] != '/':
-        ans += f'中云状为：{data.middle_cloud[item[3]]}, '
+        ans += f'中云状：{data.middle_cloud[item[3]]}, '
+    else:
+        ans += f'中云状：缺测，'
     if item[4] != '/':
-        ans += f'高云状为：{data.high_cloud[item[4]]}'
+        ans += f'高云状：{data.high_cloud[item[4]]}'
+    else:
+        ans += f'高云状：缺测'
     return ans
 
 
@@ -165,16 +198,19 @@ def search(filepath: str, station: str):
                     msg = ans.group(1).split()
                 else:
                     msg = line.split()
-                    ans = pattern.match(next(f))
+                    line = next(f)
+                    ans = pattern.match(line)
                     while not ans:
                         msg.extend(line.split())
-                        ans = pattern.match(next(f))
+                        line = next(f)
+                        ans = pattern.match(line)
                     msg.extend(ans.group(1).split())
                 # 翻译目标报文
                 try:
+                    print(msg)
                     result = translate(msg)
                     return '\n'.join(list(result.values()))
-                except Exception as e:
+                except Exception:
                     traceback.print_exc()
                     return data.TRANSLATE_ERROR
                 break

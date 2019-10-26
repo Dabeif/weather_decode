@@ -7,15 +7,6 @@ STATION_NOT_FOUND = -2
 NOT_GROUND_MSG = -3
 TRANSLATE_ERROR = -4
 
-# 台站号
-station_num = {
-    '58238': '南京',
-    '58259': '南通',
-    '58343': '常州',
-    '58321': '合肥',
-    '58311': '六安',
-}
-
 # 云底高度
 cloud_bottom_height = {
     '0': '<50m',
