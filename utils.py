@@ -28,7 +28,7 @@ def effective_visibility(x: int):
 
 
 def IIiii(item: str):
-    df = pd.read_excel("station_number.xlsx", header=None)
+    df = pd.read_excel("地面资料/station_number.xlsx", header=None)
     ans = df[df[0] == int(item)]
     if ans.empty:
         ans = "未知"
