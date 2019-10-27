@@ -11,7 +11,7 @@ pattern = re.compile('^(.*)=\n?$')
 # 有效能见度
 def effective_visibility(x: int):
     tmp = ['>70', '<0.05', '0.05', '0.2', '0.5', '1', '2', '4', '10', '20', '>=50']
-    ans = f"能见度为"
+    ans = ''
     if x == 0:
         ans += "<0.1"
     elif 1 <= x <= 50:
@@ -24,7 +24,7 @@ def effective_visibility(x: int):
         ans += f'{(x-80)*5+30}'
     elif x >= 89:
         ans += tmp[x-89]
-    return ans + '千米'
+    return ans
 
 
 def IIiii(item: str):
@@ -50,15 +50,17 @@ def ir_ix_h_vv(item: str):
     if item[1] != '/':
         ans += ('不' if item[1] != '1' else '') + '编报天气现象组, '
     # h: 云底高度
+    ans += '云底高度：'
     if item[2] != '/':
-        ans += f'云底高度为{data.cloud_bottom_height[item[2]]}, '
+        ans += f'{data.cloud_bottom_height[item[2]]}, '
     else:
-        ans += '云底高度缺测'
+        ans += '缺测'
     # vv: 有效能见度
+    ans += '有效能见度：'
     if item[3:] != '//':
-        ans += effective_visibility(int(item[3:]))
+        ans += f'{effective_visibility(int(item[3:]))}千米'
     else:
-        ans += '有效能见度缺测'
+        ans += '缺测'
     return ans
 
 
@@ -94,7 +96,14 @@ def _1Sn_TTT(item: str):
 
 
 def _2Sn_TdTdTd(item: str):
-    return f'露点：' + ('零下' if item[1] == '1' else '') + f'{int(item[2:]) / 10}摄氏度'
+    ans = '露点：'
+    if item[1] == '1':
+        ans += '零下'
+    if item[2:] != '///':
+        ans += f'{int(item[2:]) / 10}摄氏度'
+    else:
+        ans += '缺测'
+    return ans
 
 
 def _3PoPoPoPo(item: str):
@@ -125,20 +134,35 @@ def _5aPPP(item: str):
 
 
 def _6RRR1(item: str):
-    ans = ''
+    ans = '过去六小时内本站降水量:'
     t = int(item[1:-1])
-    if 1 <= t <= 988:
-        ans += f'过去六小时内本站降水量为{t}mm'
-    elif t == 990:
-        ans += f'过去六小时内本站降水微量'
-    elif 991 <= t <= 999:
-        ans += f'过去六小时内本站降水量为{(t - 990) / 10}mm'
+    if t != '///':
+        if 1 <= t <= 988:
+            ans += f'{t}mm'
+        elif t == 990:
+            ans += f'微量'
+        elif 991 <= t <= 999:
+            ans += f'{(t - 990) / 10}mm'
+    else:
+        ans += '缺测'
     return ans
 
 
 def _7wwW1W2(item: str):
-    return f'现在天气现象是{data.weather_phenomenon[item[1:3]]}, ' \
-        f'过去六小时出现的天气现象是{data.past_weather_phenomenon[item[3]]}和{data.past_weather_phenomenon[item[4]]}'
+    ww = item[1:3]
+    W1 = item[3]
+    W2 = item[4]
+    ans = '现在天气现象:'
+    if ww != "//":
+        ans += f'{data.weather_phenomenon[ww]}\n'
+    else:
+        ans += '缺测\n'
+    ans += '过去天气现象：'
+    if W1 != '/':
+        ans += f'{data.past_weather_phenomenon[W1]}'
+    if W2 != '/':
+        ans += f'{data.past_weather_phenomenon[W2]}'
+    return ans
 
 
 def _8Nh_CCC(item: str):
@@ -166,6 +190,7 @@ def _8Nh_CCC(item: str):
 def translate(msg: list):
     ans = {msg[0]: IIiii(msg[0]), msg[1]: ir_ix_h_vv(msg[1]), msg[2]: N_dd_ff(msg[2])}
     func_list = [_1Sn_TTT, _2Sn_TdTdTd, _3PoPoPoPo, _4PPPP, _5aPPP, _6RRR1, _7wwW1W2, _8Nh_CCC]
+    not_recorded = list(range(1, 9))
     for item in msg[3:]:
         # 第3段不编报
         if item.startswith('333'):
@@ -173,7 +198,14 @@ def translate(msg: list):
         # 编报第2段
         if item[0].isdigit():
             n = int(item[0])
+            not_recorded.remove(n)
             ans[item] = func_list[n-1](item)
+    if not not_recorded:
+        ans['缺测'] = '缺测：无\n'
+    else:
+        ans['缺测'] = '缺测:\n'
+        for i in not_recorded:
+            ans['缺测'] += f'{data.not_recorded[str(i)]}\n'
     return ans
 
 
