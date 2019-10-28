@@ -161,7 +161,7 @@ def _7wwW1W2(item: str):
     if W1 != '/':
         ans += f'{data.past_weather_phenomenon[W1]}'
     if W2 != '/':
-        ans += f'{data.past_weather_phenomenon[W2]}'
+        ans += f'和{data.past_weather_phenomenon[W2]}'
     return ans
 
 
