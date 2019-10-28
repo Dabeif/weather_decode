@@ -87,7 +87,9 @@ def N_dd_ff(item: str):
 def _1Sn_TTT(item: str):
     ans = '温度：'
     if item[1] == '1':
-        ans += '零下'
+        ans += '-'
+    else:
+        ans += '+'
     if item[2:] != '///':
         ans += f'{int(item[2:]) / 10}摄氏度'
     else:
@@ -98,7 +100,9 @@ def _1Sn_TTT(item: str):
 def _2Sn_TdTdTd(item: str):
     ans = '露点：'
     if item[1] == '1':
-        ans += '零下'
+        ans += '-'
+    else:
+        ans += '+'
     if item[2:] != '///':
         ans += f'{int(item[2:]) / 10}摄氏度'
     else:
@@ -201,9 +205,9 @@ def translate(msg: list):
             not_recorded.remove(n)
             ans[item] = func_list[n-1](item)
     if not not_recorded:
-        ans['缺测'] = '缺测：无\n'
+        ans['缺测'] = '\n缺测：无\n'
     else:
-        ans['缺测'] = '缺测:\n'
+        ans['缺测'] = '\n缺测:\n'
         for i in not_recorded:
             ans['缺测'] += f'{data.not_recorded[str(i)]}\n'
     return ans
